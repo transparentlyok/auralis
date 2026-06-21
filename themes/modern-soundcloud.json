@@ -1,0 +1,38 @@
+{
+  "id": "modern-soundcloud",
+  "name": "Modern SoundCloud",
+  "author": "Auralis",
+  "version": "1.0.0",
+  "density": "comfortable",
+  "colors": {
+    "background": "#fafafa",
+    "surface": "#ffffff",
+    "surfaceAlt": "#f0f1f2",
+    "text": "#171717",
+    "textMuted": "#6b6f75",
+    "border": "#d8dadd",
+    "borderStrong": "#b4b8bd",
+    "accent": "#ff5500",
+    "accentText": "#ffffff",
+    "selected": "#ffe4d2",
+    "selectedText": "#181818",
+    "danger": "#c73a46",
+    "ok": "#217a52",
+    "waveform": "#ff5500"
+  },
+  "fonts": {
+    "ui": "\"Inter\", \"Segoe UI\", Arial, sans-serif",
+    "mono": "\"Cascadia Mono\", Consolas, monospace",
+    "size": "13px"
+  },
+  "spacing": {
+    "unit": "5px",
+    "panel": "10px",
+    "row": "30px"
+  },
+  "borders": {
+    "radius": "6px",
+    "width": "1px"
+  }
+}
+

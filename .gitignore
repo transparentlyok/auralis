@@ -1,0 +1,16 @@
+node_modules/
+dist/
+out/
+dist-electron/
+release*/
+coverage/
+.agents/
+.codex/
+design-qa.md
+.env
+.env.*
+!.env.example
+*.log
+*.local
+Desktop.ini
+.DS_Store

@@ -1,0 +1,38 @@
+{
+  "id": "dark-compact",
+  "name": "Dark Compact",
+  "author": "Auralis",
+  "version": "1.0.0",
+  "density": "dense",
+  "colors": {
+    "background": "#111314",
+    "surface": "#181b1d",
+    "surfaceAlt": "#222629",
+    "text": "#f0f2f3",
+    "textMuted": "#9ca7ad",
+    "border": "#30363a",
+    "borderStrong": "#485158",
+    "accent": "#ff7700",
+    "accentText": "#1a0d00",
+    "selected": "#263f52",
+    "selectedText": "#ffffff",
+    "danger": "#ff5b65",
+    "ok": "#67d391",
+    "waveform": "#ff8b22"
+  },
+  "fonts": {
+    "ui": "\"Segoe UI\", Arial, sans-serif",
+    "mono": "\"Cascadia Mono\", Consolas, monospace",
+    "size": "12px"
+  },
+  "spacing": {
+    "unit": "4px",
+    "panel": "8px",
+    "row": "22px"
+  },
+  "borders": {
+    "radius": "3px",
+    "width": "1px"
+  }
+}
+

@@ -1,0 +1,38 @@
+{
+  "id": "classic-foobar",
+  "name": "Classic Foobar",
+  "author": "Auralis",
+  "version": "1.0.0",
+  "density": "compact",
+  "colors": {
+    "background": "#ece9d8",
+    "surface": "#f7f5e8",
+    "surfaceAlt": "#dfdbc9",
+    "text": "#111111",
+    "textMuted": "#555555",
+    "border": "#9a988e",
+    "borderStrong": "#5f5d55",
+    "accent": "#ff6a00",
+    "accentText": "#ffffff",
+    "selected": "#0a246a",
+    "selectedText": "#ffffff",
+    "danger": "#a40000",
+    "ok": "#177245",
+    "waveform": "#525252"
+  },
+  "fonts": {
+    "ui": "Tahoma, \"Segoe UI\", sans-serif",
+    "mono": "\"Cascadia Mono\", Consolas, monospace",
+    "size": "12px"
+  },
+  "spacing": {
+    "unit": "4px",
+    "panel": "6px",
+    "row": "24px"
+  },
+  "borders": {
+    "radius": "0px",
+    "width": "1px"
+  }
+}
+

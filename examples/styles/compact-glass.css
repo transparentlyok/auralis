@@ -1,0 +1,8 @@
+.player-bar {
+  background: color-mix(in srgb, var(--color-surface), transparent 8%);
+  border-top-color: var(--color-border-strong);
+}
+
+.table-row:not(.table-head):hover {
+  box-shadow: inset 3px 0 var(--color-accent);
+}

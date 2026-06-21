@@ -1,0 +1,27 @@
+{
+  "theme": "classic-foobar",
+  "sourceMode": "web",
+  "layout": {
+    "showSidebar": true,
+    "showArtwork": true,
+    "showWaveform": true,
+    "showWidgetDock": true,
+    "showStatusBar": true,
+    "queuePanel": "right",
+    "density": "compact",
+    "sidebarWidth": 196,
+    "queueWidth": 356,
+    "artworkWidth": 220,
+    "fontSize": 12,
+    "rowHeight": 24,
+    "widgetDockMaxHeight": 320
+  },
+  "searchLimit": 50,
+  "audioQuality": "best",
+  "widgets": [
+    { "id": "waveform-main", "kind": "waveform", "title": "Waveform", "enabled": true, "span": 2, "height": 76 },
+    { "id": "spectrum-main", "kind": "spectrum", "title": "Spectrum", "enabled": true, "span": 1, "height": 76 }
+  ],
+  "cacheTtlHours": 24,
+  "notes": "Auralis creates a live customization folder in the app userData directory. Drop JSON theme files into customization/themes."
+}

@@ -1,0 +1,87 @@
+{
+  "name": "auralis",
+  "version": "0.1.0",
+  "description": "A foobar2000-inspired SoundCloud desktop client with deep customization.",
+  "author": "Auralis Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/transparentlyok/auralis.git"
+  },
+  "homepage": "https://github.com/transparentlyok/auralis#readme",
+  "bugs": {
+    "url": "https://github.com/transparentlyok/auralis/issues"
+  },
+  "private": true,
+  "type": "module",
+  "main": "out/main/main.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run typecheck && electron-vite build",
+    "dist": "npm run build && electron-builder",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^3.0.0",
+    "discord-rpc": "^4.0.1",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/discord-rpc": "^4.0.11",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^42.4.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  },
+  "build": {
+    "appId": "com.transparentlyok.auralis",
+    "productName": "Auralis",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "files": [
+      "out/**/*",
+      "package.json",
+      "themes/**/*",
+      "examples/**/*",
+      "docs/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Audio"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "transparentlyok",
+      "repo": "auralis"
+    }
+  }
+}

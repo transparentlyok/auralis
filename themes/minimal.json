@@ -1,0 +1,38 @@
+{
+  "id": "minimal",
+  "name": "Minimal",
+  "author": "Auralis",
+  "version": "1.0.0",
+  "density": "compact",
+  "colors": {
+    "background": "#f5f5f3",
+    "surface": "#fbfbfa",
+    "surfaceAlt": "#ededeb",
+    "text": "#20201e",
+    "textMuted": "#777771",
+    "border": "#d0d0cc",
+    "borderStrong": "#9a9a94",
+    "accent": "#2f6f73",
+    "accentText": "#ffffff",
+    "selected": "#dbe9ea",
+    "selectedText": "#111111",
+    "danger": "#a94b42",
+    "ok": "#467c45",
+    "waveform": "#2f6f73"
+  },
+  "fonts": {
+    "ui": "\"Segoe UI\", Arial, sans-serif",
+    "mono": "\"Cascadia Mono\", Consolas, monospace",
+    "size": "12px"
+  },
+  "spacing": {
+    "unit": "4px",
+    "panel": "8px",
+    "row": "26px"
+  },
+  "borders": {
+    "radius": "2px",
+    "width": "1px"
+  }
+}
+

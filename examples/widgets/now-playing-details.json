@@ -1,0 +1,14 @@
+{
+  "id": "now-playing-details",
+  "name": "Now Playing Details",
+  "author": "Auralis",
+  "version": "1.0.0",
+  "template": "{{track.title}}\n{{track.artist}}\n{{track.genre}}  {{playback.elapsed}} / {{playback.duration}}\nVolume {{playback.volume}}",
+  "defaultSpan": 1,
+  "defaultHeight": 92,
+  "style": {
+    "fontFamily": "var(--font-mono)",
+    "whiteSpace": "pre-line",
+    "padding": "8px"
+  }
+}
