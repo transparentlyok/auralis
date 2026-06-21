@@ -2,7 +2,10 @@
   "name": "auralis",
   "version": "0.1.0",
   "description": "A foobar2000-inspired SoundCloud desktop client with deep customization.",
-  "author": "Auralis Contributors",
+  "author": {
+    "name": "Auralis Contributors",
+    "email": "257272272+transparentlyok@users.noreply.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/transparentlyok/auralis.git"
