@@ -9,6 +9,8 @@ const SOUNDCLOUD_HOME = `${SOUNDCLOUD_ORIGIN}/`;
 const SOUNDCLOUD_API_V2 = 'https://api-v2.soundcloud.com';
 const SESSION_PARTITION = 'persist:soundcloud';
 const AUTH_HOSTS = new Set(['accounts.google.com', 'appleid.apple.com', 'www.facebook.com']);
+const PLAYER_IDLE_CLOSE_MS = 60_000;
+const SEARCH_CACHE_LIMIT = 20;
 
 export type WebMediaCommand = 'playPause' | 'next' | 'previous' | 'stop';
 
@@ -28,6 +30,7 @@ export class SoundCloudWebSession {
   private nowPlaying?: WebNowPlaying;
   private currentTrack?: Track;
   private ticker?: NodeJS.Timeout;
+  private playerIdleTimer?: NodeJS.Timeout;
   private lastNotificationTitle?: string;
   private recognizedCurrentTrack = false;
   private readonly searchCache = new Map<string, { savedAt: number; value: SearchResults }>();
@@ -116,6 +119,7 @@ export class SoundCloudWebSession {
     try {
       const value = await this.fastSearch(normalized, limit, category);
       this.searchCache.set(cacheKey, { savedAt: Date.now(), value });
+      pruneMap(this.searchCache, SEARCH_CACHE_LIMIT);
       return value;
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'SoundCloud browser search failed.';
@@ -368,6 +372,7 @@ export class SoundCloudWebSession {
 
   destroy(): void {
     if (this.ticker) clearInterval(this.ticker);
+    if (this.playerIdleTimer) clearTimeout(this.playerIdleTimer);
     if (this.playerView) this.window.contentView.removeChildView(this.playerView);
     if (this.scraperView) this.window.contentView.removeChildView(this.scraperView);
     if (this.playerView && !this.playerView.webContents.isDestroyed()) this.playerView.webContents.close();
@@ -376,7 +381,7 @@ export class SoundCloudWebSession {
   }
 
   private createHiddenView(): WebContentsView {
-    const view = new WebContentsView({ webPreferences: browserPreferences() });
+    const view = new WebContentsView({ webPreferences: browserPreferences({ images: false }) });
     view.setVisible(false);
     this.window.contentView.addChildView(view);
     this.configureNavigation(view.webContents, false);
@@ -385,6 +390,8 @@ export class SoundCloudWebSession {
 
   private ensurePlayerView(): WebContentsView {
     if (this.playerView && !this.playerView.webContents.isDestroyed()) return this.playerView;
+    if (this.playerIdleTimer) clearTimeout(this.playerIdleTimer);
+    this.playerIdleTimer = undefined;
     this.playerView = this.createHiddenView();
     this.configurePlayerEvents(this.playerView);
     return this.playerView;
@@ -462,6 +469,8 @@ export class SoundCloudWebSession {
 
   private configurePlayerEvents(view: WebContentsView): void {
     view.webContents.on('media-started-playing', () => {
+      if (this.playerIdleTimer) clearTimeout(this.playerIdleTimer);
+      this.playerIdleTimer = undefined;
       this.startTicker();
       void this.refreshNowPlaying(true);
     });
@@ -469,6 +478,7 @@ export class SoundCloudWebSession {
       void this.refreshNowPlaying();
       if (this.ticker) clearInterval(this.ticker);
       this.ticker = undefined;
+      this.schedulePlayerCleanup();
     });
     view.webContents.on('did-fail-load', (_event, code, description) => {
       if (code === -3) return;
@@ -480,6 +490,27 @@ export class SoundCloudWebSession {
   private startTicker(): void {
     if (this.ticker) clearInterval(this.ticker);
     this.ticker = setInterval(() => void this.refreshNowPlaying(), 750);
+    this.ticker.unref();
+  }
+
+  private schedulePlayerCleanup(): void {
+    if (this.playerIdleTimer || !this.playerView) return;
+    this.playerIdleTimer = setTimeout(() => {
+      this.playerIdleTimer = undefined;
+      void this.closePlayerView();
+    }, PLAYER_IDLE_CLOSE_MS);
+    this.playerIdleTimer.unref();
+  }
+
+  private async closePlayerView(): Promise<void> {
+    const view = this.playerView;
+    if (!view) return;
+    this.playerView = undefined;
+    this.window.contentView.removeChildView(view);
+    if (!view.webContents.isDestroyed()) {
+      await releaseWebContents(view.webContents);
+      view.webContents.close();
+    }
   }
 
   private async refreshNowPlaying(notify = false): Promise<void> {
@@ -728,12 +759,17 @@ export class SoundCloudWebSession {
   }
 
   private async scrapeSearchPage(query: string, limit: number, category: SearchCategory): Promise<SearchResults> {
-    const encoded = encodeURIComponent(query);
-    const tracks = category === 'tracks' ? await this.scrapeTracks(`/search/sounds?q=${encoded}`, limit) : [];
-    const artists = category === 'artists' ? await this.scrapeArtists(`/search/people?q=${encoded}`, Math.min(limit, 30)) : [];
-    const playlists = category === 'playlists' ? await this.scrapePlaylists(`/search/sets?q=${encoded}`, limit, 'playlist') : [];
-    const albums = category === 'albums' ? await this.scrapePlaylists(`/search/albums?q=${encoded}`, limit, 'album') : [];
-    return { tracks, artists, playlists, albums, mode: 'web' };
+    const contents = this.scraperContents;
+    try {
+      const encoded = encodeURIComponent(query);
+      const tracks = category === 'tracks' ? await this.scrapeTracks(`/search/sounds?q=${encoded}`, limit) : [];
+      const artists = category === 'artists' ? await this.scrapeArtists(`/search/people?q=${encoded}`, Math.min(limit, 30)) : [];
+      const playlists = category === 'playlists' ? await this.scrapePlaylists(`/search/sets?q=${encoded}`, limit, 'playlist') : [];
+      const albums = category === 'albums' ? await this.scrapePlaylists(`/search/albums?q=${encoded}`, limit, 'album') : [];
+      return { tracks, artists, playlists, albums, mode: 'web' };
+    } finally {
+      await this.releaseScraperView(contents);
+    }
   }
 
   private async scrapeTracks(path: string, limit: number): Promise<Track[]> {
@@ -818,14 +854,25 @@ function chunk<T>(values: T[], size: number): T[][] {
   return chunks;
 }
 
-function browserPreferences() {
+function browserPreferences(options: { images?: boolean } = {}) {
   return {
     partition: SESSION_PARTITION,
     contextIsolation: true,
     nodeIntegration: false,
     sandbox: true,
+    images: options.images !== false,
+    backgroundThrottling: true,
+    webgl: false,
     devTools: !app.isPackaged
   } as const;
+}
+
+function pruneMap<K, V>(map: Map<K, V>, limit: number): void {
+  while (map.size > limit) {
+    const oldest = map.keys().next();
+    if (oldest.done) return;
+    map.delete(oldest.value);
+  }
 }
 
 async function releaseWebContents(contents: WebContents): Promise<void> {

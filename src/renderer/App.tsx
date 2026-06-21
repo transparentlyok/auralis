@@ -195,7 +195,7 @@ function AuralisWorkspace(props: {
       setLoading(true);
       setStatus('Reading your liked tracks');
       try {
-        const tracks = await window.auralis.webLikedTracks(5000);
+        const tracks = await window.auralis.webLikedTracks(Math.max(settings.searchLimit, 100));
         const next: SearchResults = { tracks, artists: [], playlists: [], albums: [], mode: 'web' };
         viewResults.current.likes = next;
         if (requestId !== navigationRequest.current) return;

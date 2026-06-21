@@ -16,6 +16,10 @@ let mainWindow: BrowserWindow | undefined;
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+app.commandLine.appendSwitch('disable-background-networking');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-extensions');
+app.commandLine.appendSwitch('disable-features', 'MediaRouter,OptimizationHints,Translate');
 
 async function createWindow(): Promise<void> {
   const store = new AppStore();

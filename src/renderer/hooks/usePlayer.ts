@@ -21,6 +21,7 @@ export function usePlayer(initialVolume: number, audioQuality: AudioQuality) {
   const toneRef = useRef<MockToneEngine | null>(null);
   const hlsRef = useRef<HlsType | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const tickerRef = useRef<number>();
   const queueRef = useRef(queue);
@@ -217,15 +218,6 @@ export function usePlayer(initialVolume: number, audioQuality: AudioQuality) {
     audio.crossOrigin = 'anonymous';
     audio.volume = initialVolume;
     audioRef.current = audio;
-    const context = new AudioContext();
-    const source = context.createMediaElementSource(audio);
-    const analyser = context.createAnalyser();
-    analyser.fftSize = 2048;
-    analyser.smoothingTimeConstant = 0.82;
-    source.connect(analyser);
-    analyser.connect(context.destination);
-    audioContextRef.current = context;
-    analyserRef.current = analyser;
 
     const update = () => setPlayback((state) => ({
       ...state,
@@ -258,9 +250,10 @@ export function usePlayer(initialVolume: number, audioQuality: AudioQuality) {
       audio.removeEventListener('ended', advance);
       if (tickerRef.current) window.clearTimeout(tickerRef.current);
       toneRef.current?.stop();
-      source.disconnect();
-      analyser.disconnect();
-      void context.close();
+      audioSourceRef.current?.disconnect();
+      analyserRef.current?.disconnect();
+      void audioContextRef.current?.close();
+      audioSourceRef.current = null;
       analyserRef.current = null;
       audioContextRef.current = null;
     };
@@ -303,7 +296,24 @@ export function usePlayer(initialVolume: number, audioQuality: AudioQuality) {
     };
   }, [advance, pause, previous, toggle]);
 
-  const getAnalyser = useCallback(() => analyserRef.current, []);
+  const getAnalyser = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return null;
+    if (!audioContextRef.current) {
+      const context = new AudioContext();
+      const source = context.createMediaElementSource(audio);
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.82;
+      source.connect(analyser);
+      analyser.connect(context.destination);
+      audioContextRef.current = context;
+      audioSourceRef.current = source;
+      analyserRef.current = analyser;
+    }
+    if (!audio.paused) void audioContextRef.current.resume();
+    return analyserRef.current;
+  }, []);
 
   return useMemo(() => ({
     queue,
