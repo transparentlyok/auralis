@@ -5,6 +5,8 @@
 
 Auralis is a desktop SoundCloud client inspired by foobar2000's compact power-user workflow and Spicetify-style customization. Its default Web mode uses a hidden, authenticated SoundCloud browser as a data and playback bridge while all everyday interaction stays in Auralis's native tables, queue, artwork panel, and player. No developer API key is required. Optional API and mock modes remain available.
 
+[https://i.imgur.com/abc123.png](7https://i.imgur.com/y01oJIv.png)
+
 ## Stack Choice
 
 Auralis uses Electron, React, TypeScript, and Vite. Electron is heavier than Tauri, but it is the pragmatic choice because Chromium provides compatible HLS/audio playback, persistent SoundCloud browser sessions, Media Session support, native notifications, encrypted optional secret storage through `safeStorage`, and global media shortcuts in one cross-platform shell. A hidden, sandboxed SoundCloud view establishes the normal-user session while React owns the visible UI and native audio element.
