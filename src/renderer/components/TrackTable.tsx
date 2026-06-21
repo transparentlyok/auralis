@@ -175,6 +175,7 @@ export function TrackTable(props: TrackTableProps) {
           }}
         />
       )}
+      {props.loadingMore && <div className="loading-more">Loading more...</div>}
     </div>
   );
 }

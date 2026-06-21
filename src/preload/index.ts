@@ -31,7 +31,7 @@ const api = {
   webLogin: (): Promise<WebSessionState> => ipcRenderer.invoke('web:login'),
   webSearch: (query: string, limit: number, category: SearchCategory = 'tracks'): Promise<SearchResults> => ipcRenderer.invoke('web:search', query, limit, category),
   webSearchMore: (nextHref: string, category: SearchCategory): Promise<SearchResults> => ipcRenderer.invoke('web:searchMore', nextHref, category),
-  webLikedTracks: (limit: number): Promise<Track[]> => ipcRenderer.invoke('web:likedTracks', limit),
+  webLikedTracks: (limit: number, nextHref?: string): Promise<SearchResults> => ipcRenderer.invoke('web:likedTracks', limit, nextHref),
   webLikeTrack: (track: Track): Promise<Track> => ipcRenderer.invoke('web:likeTrack', track),
   webLibrary: (): Promise<{ tracks: Track[]; playlists: Playlist[] }> => ipcRenderer.invoke('web:library'),
   webGetTrack: (track: Track): Promise<Track> => ipcRenderer.invoke('web:getTrack', track),

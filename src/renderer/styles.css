@@ -378,6 +378,16 @@ input {
   min-width: 100%;
 }
 
+.loading-more {
+  padding: 8px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.entity-grid .loading-more {
+  grid-column: 1 / -1;
+}
+
 .table-row {
   display: grid;
   min-width: max-content;

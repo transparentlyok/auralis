@@ -25,9 +25,9 @@ export class SoundCloudService {
         this.fetchCollection<Record<string, unknown>>(`/users?q=${encodeURIComponent(query)}&linked_partitioning=true&limit=${Math.min(limit, 30)}`, token),
         this.fetchCollection<Record<string, unknown>>(`/playlists?q=${encodeURIComponent(query)}&show_tracks=false&linked_partitioning=true&limit=${limit}`, token)
       ]);
-      const mappedPlaylists = playlists.map(mapPlaylist);
+      const mappedPlaylists = playlists.map((playlist) => mapPlaylist(playlist));
       const result: SearchResults = {
-        tracks: tracks.map(mapTrack),
+        tracks: tracks.map((track) => mapTrack(track)),
         artists: artists.map(mapUser),
         playlists: mappedPlaylists.filter((playlist) => playlist.kind !== 'album'),
         albums: mappedPlaylists.filter((playlist) => playlist.kind === 'album'),
@@ -63,8 +63,8 @@ export class SoundCloudService {
         this.fetchCollection<Record<string, unknown>>('/me/playlists?show_tracks=false&linked_partitioning=true&limit=50', token)
       ]);
       return {
-        tracks: tracks.map(mapTrack),
-        playlists: playlists.map(mapPlaylist)
+        tracks: tracks.map((track) => mapTrack(track)),
+        playlists: playlists.map((playlist) => mapPlaylist(playlist))
       };
     } catch {
       return {
@@ -80,7 +80,7 @@ export class SoundCloudService {
     }
     const token = await this.auth.ensureAccessToken().catch(() => this.auth.getAppToken());
     const data = await this.fetchJson<Record<string, unknown>>(`/tracks/${trackId}`, token);
-    return mapTrack(data);
+    return mapTrack(data, true);
   }
 
   async getArtist(userId: string | number): Promise<{ artist: UserProfile; tracks: Track[]; playlists: Playlist[] }> {
@@ -100,8 +100,8 @@ export class SoundCloudService {
     ]);
     return {
       artist: mapUser(artistData),
-      tracks: tracks.map(mapTrack),
-      playlists: playlists.map(mapPlaylist)
+      tracks: tracks.map((track) => mapTrack(track)),
+      playlists: playlists.map((playlist) => mapPlaylist(playlist))
     };
   }
 
@@ -170,7 +170,7 @@ export class SoundCloudService {
   }
 }
 
-export function mapTrack(data: Record<string, unknown>): Track {
+export function mapTrack(data: Record<string, unknown>, includeRaw = false): Track {
   const user = (data.user && typeof data.user === 'object') ? data.user as Record<string, unknown> : {};
   const publisher = (data.publisher_metadata && typeof data.publisher_metadata === 'object') ? data.publisher_metadata as Record<string, unknown> : {};
   return {
@@ -193,14 +193,14 @@ export function mapTrack(data: Record<string, unknown>): Track {
     liked: data.user_favorite === true,
     downloadable: data.downloadable === true,
     source: 'soundcloud',
-    raw: data
+    raw: includeRaw ? compactTrackRaw(data) : undefined
   };
 }
 
-export function mapPlaylist(data: Record<string, unknown>): Playlist {
+export function mapPlaylist(data: Record<string, unknown>, includeRaw = false): Playlist {
   const user = (data.user && typeof data.user === 'object') ? data.user as Record<string, unknown> : {};
   const tracks = Array.isArray(data.tracks)
-    ? (data.tracks as Record<string, unknown>[]).filter(Boolean).map(mapTrack)
+    ? (data.tracks as Record<string, unknown>[]).filter(Boolean).map((track) => mapTrack(track, includeRaw))
     : undefined;
   const kind = normalizePlaylistKind(data);
   return {
@@ -215,7 +215,15 @@ export function mapPlaylist(data: Record<string, unknown>): Playlist {
     kind,
     tracks,
     source: 'soundcloud',
-    raw: data
+    raw: includeRaw ? data : undefined
+  };
+}
+
+function compactTrackRaw(data: Record<string, unknown>): Record<string, unknown> {
+  return {
+    media: data.media,
+    track_authorization: data.track_authorization,
+    policy: data.policy
   };
 }
 

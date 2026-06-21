@@ -118,6 +118,7 @@ function beginResize(
 
 function AudioVisualizer(props: { mode: Exclude<WidgetKind, 'waveform' | 'lyrics' | 'now-playing' | 'track-stats' | 'custom'>; getAnalyser: () => AnalyserNode | null; active: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const data = useRef<Uint8Array<ArrayBuffer>>();
   useEffect(() => {
     let frame = 0;
     let lastPaint = 0;
@@ -131,7 +132,7 @@ function AudioVisualizer(props: { mode: Exclude<WidgetKind, 'waveform' | 'lyrics
     }
     const paint = (time: number) => {
       frame = requestAnimationFrame(paint);
-      if (time - lastPaint < 30) return;
+      if (time - lastPaint < 50) return;
       lastPaint = time;
       const element = canvas.current;
       const analyser = props.getAnalyser();
@@ -139,9 +140,11 @@ function AudioVisualizer(props: { mode: Exclude<WidgetKind, 'waveform' | 'lyrics
       resizeCanvas(element);
       const context = element.getContext('2d');
       if (!context) return;
-      if (props.mode === 'oscilloscope') drawOscilloscope(context, element, analyser);
-      else if (props.mode === 'spectrogram') drawSpectrogram(context, element, analyser);
-      else drawSpectrum(context, element, analyser);
+      const size = props.mode === 'oscilloscope' ? analyser.fftSize : analyser.frequencyBinCount;
+      if (!data.current || data.current.length !== size) data.current = new Uint8Array(size);
+      if (props.mode === 'oscilloscope') drawOscilloscope(context, element, analyser, data.current);
+      else if (props.mode === 'spectrogram') drawSpectrogram(context, element, analyser, data.current);
+      else drawSpectrum(context, element, analyser, data.current);
     };
     frame = requestAnimationFrame(paint);
     return () => cancelAnimationFrame(frame);
@@ -255,8 +258,7 @@ function resizeCanvas(canvas: HTMLCanvasElement) {
   }
 }
 
-function drawSpectrum(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode) {
-  const data = new Uint8Array(analyser.frequencyBinCount);
+function drawSpectrum(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode, data: Uint8Array<ArrayBuffer>) {
   analyser.getByteFrequencyData(data);
   const styles = getComputedStyle(document.documentElement);
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -272,8 +274,7 @@ function drawSpectrum(context: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
   }
 }
 
-function drawOscilloscope(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode) {
-  const data = new Uint8Array(analyser.fftSize);
+function drawOscilloscope(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode, data: Uint8Array<ArrayBuffer>) {
   analyser.getByteTimeDomainData(data);
   const styles = getComputedStyle(document.documentElement);
   context.fillStyle = styles.getPropertyValue('--color-surface-alt').trim();
@@ -289,8 +290,7 @@ function drawOscilloscope(context: CanvasRenderingContext2D, canvas: HTMLCanvasE
   context.stroke();
 }
 
-function drawSpectrogram(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode) {
-  const data = new Uint8Array(analyser.frequencyBinCount);
+function drawSpectrogram(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, analyser: AnalyserNode, data: Uint8Array<ArrayBuffer>) {
   analyser.getByteFrequencyData(data);
   context.drawImage(canvas, -2, 0);
   const bins = Math.min(data.length, canvas.height);

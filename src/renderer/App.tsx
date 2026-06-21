@@ -18,6 +18,8 @@ import { mockSearch } from '../shared/mockData';
 import { prefetchLyrics, requestLyrics } from './lyricsClient';
 import type { AppSettings, AppSourceMode, AuthStatus, Playlist, SearchCategory, SearchResults, Track, WebSessionState } from '../shared/types';
 
+const LIKES_PAGE_SIZE = 100;
+
 export default function App() {
   const { settings, updateSettings, loading } = useSettings();
   if (!settings) {
@@ -48,6 +50,7 @@ function AuralisWorkspace(props: {
   const [details, setDetails] = useState<Track | Playlist | undefined>();
   const [webState, setWebState] = useState<WebSessionState>();
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const viewResults = useRef<Partial<Record<'library' | 'likes' | 'offline', SearchResults>>>({});
   const searchResults = useRef(new Map<string, SearchResults>());
   const loadedSearchCategories = useRef(new Map<string, Set<SearchCategory>>());
@@ -195,12 +198,11 @@ function AuralisWorkspace(props: {
       setLoading(true);
       setStatus('Reading your liked tracks');
       try {
-        const tracks = await window.auralis.webLikedTracks(Math.max(settings.searchLimit, 100));
-        const next: SearchResults = { tracks, artists: [], playlists: [], albums: [], mode: 'web' };
+        const next = await window.auralis.webLikedTracks(LIKES_PAGE_SIZE);
         viewResults.current.likes = next;
         if (requestId !== navigationRequest.current) return;
         setResults(next);
-        setStatus('Browser-backed likes loaded');
+        setStatus(`Browser-backed likes loaded (${next.tracks.length})`);
       } catch (error) {
         if (requestId === navigationRequest.current) setStatus(error instanceof Error ? error.message : 'SoundCloud browser likes failed');
       } finally {
@@ -274,25 +276,32 @@ function AuralisWorkspace(props: {
   }, [query, settings.searchLimit, settings.sourceMode, view]);
 
   const loadMoreResults = useCallback(async () => {
-    if (settings.sourceMode !== 'web' || view !== 'search' || loadingMore) return;
+    if (settings.sourceMode !== 'web' || loadingMoreRef.current) return;
     const category = activeTab as SearchCategory;
+    const isLikesPage = view === 'likes' && category === 'tracks';
+    if (view !== 'search' && !isLikesPage) return;
     const nextHref = results.next?.[category];
     if (!nextHref) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const page = await window.auralis.webSearchMore(nextHref, category);
+      const page = isLikesPage
+        ? await window.auralis.webLikedTracks(LIKES_PAGE_SIZE, nextHref)
+        : await window.auralis.webSearchMore(nextHref, category);
       setResults((current) => {
         const merged = appendSearchPage(current, page, category);
-        searchResults.current.set(query.trim() || 'music', merged);
+        if (isLikesPage) viewResults.current.likes = merged;
+        else searchResults.current.set(query.trim() || 'music', merged);
         return merged;
       });
-      setStatus(`Loaded more ${category}`);
+      setStatus(isLikesPage ? `Loaded ${page.tracks.length} more liked tracks` : `Loaded more ${category}`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'SoundCloud pagination failed');
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [activeTab, loadingMore, query, results.next, settings.sourceMode, view]);
+  }, [activeTab, query, results.next, settings.sourceMode, view]);
 
   const changeSourceMode = useCallback((sourceMode: AppSourceMode) => {
     navigationRequest.current += 1;

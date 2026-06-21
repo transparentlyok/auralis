@@ -356,10 +356,10 @@ async function attachAndPlay(audio: HTMLAudioElement, stream: WebStreamInfo): Pr
   const hls = new Hls({
     enableWorker: true,
     startLevel: -1,
-    maxBufferLength: 20,
-    maxMaxBufferLength: 40,
-    backBufferLength: 10,
-    maxBufferSize: 30 * 1000 * 1000
+    maxBufferLength: 12,
+    maxMaxBufferLength: 24,
+    backBufferLength: 4,
+    maxBufferSize: 12 * 1000 * 1000
   });
   try {
     await new Promise<void>((resolve, reject) => {

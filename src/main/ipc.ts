@@ -96,7 +96,7 @@ export function registerIpc(
   ipcMain.handle('web:login', () => webSession.openLogin());
   ipcMain.handle('web:search', (_event, query: string, limit: number, category?: SearchCategory) => webSession.search(query, limit, category));
   ipcMain.handle('web:searchMore', (_event, nextHref: string, category: SearchCategory) => webSession.searchMore(nextHref, category));
-  ipcMain.handle('web:likedTracks', (_event, limit: number) => webSession.likedTracks(limit));
+  ipcMain.handle('web:likedTracks', (_event, limit: number, nextHref?: string) => webSession.likedTracks(limit, nextHref));
   ipcMain.handle('web:likeTrack', (_event, track: Track) => webSession.likeTrack(track));
   ipcMain.handle('web:library', () => webSession.library());
   ipcMain.handle('web:getTrack', (_event, track: Track) => webSession.getTrack(track));

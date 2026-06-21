@@ -139,13 +139,23 @@ export class SoundCloudWebSession {
     return this.mapWebSearchPage(category, page);
   }
 
-  async likedTracks(limit = 5000): Promise<Track[]> {
+  async likedTracks(limit = 100, nextHref?: string): Promise<SearchResults> {
     const userId = await this.requireWebUserId();
-    const page = await this.fetchAllCollectionPath(`/users/${userId}/likes`, Math.max(50, limit));
-    return page.collection.flatMap((item) => {
+    const page = nextHref
+      ? await this.fetchWebCursor(nextHref)
+      : await this.fetchCollectionPath(`/users/${userId}/likes`, Math.max(1, Math.min(200, limit)));
+    const tracks = page.collection.flatMap((item) => {
       const track = item.track && typeof item.track === 'object' ? item.track as Record<string, unknown> : undefined;
       return track ? [mapWebTrack(track)] : [];
     });
+    return {
+      tracks,
+      artists: [],
+      playlists: [],
+      albums: [],
+      mode: 'web',
+      next: page.nextHref ? { tracks: page.nextHref } : undefined
+    };
   }
 
   async library(): Promise<{ tracks: Track[]; playlists: Playlist[] }> {
@@ -590,38 +600,20 @@ export class SoundCloudWebSession {
     };
   }
 
+  private fetchWebCursor(nextHref: string): Promise<WebApiPage> {
+    const parsed = safeUrl(nextHref);
+    if (!parsed || parsed.protocol !== 'https:' || parsed.hostname !== 'api-v2.soundcloud.com') {
+      throw new Error('Invalid SoundCloud pagination cursor.');
+    }
+    return this.fetchWebPage(parsed);
+  }
+
   private async fetchCollectionPath(path: string, limit: number): Promise<WebApiPage> {
     const url = new URL(path, SOUNDCLOUD_API_V2);
     url.searchParams.set('limit', String(Math.max(1, Math.min(200, limit))));
     url.searchParams.set('offset', '0');
     url.searchParams.set('linked_partitioning', '1');
     return this.fetchWebPage(url);
-  }
-
-  private async fetchAllCollectionPath(path: string, limit: number): Promise<WebApiPage> {
-    const target = Math.max(1, Math.min(5000, limit));
-    const first = new URL(path, SOUNDCLOUD_API_V2);
-    first.searchParams.set('limit', String(Math.min(200, target)));
-    first.searchParams.set('offset', '0');
-    first.searchParams.set('linked_partitioning', '1');
-    const collection: Record<string, unknown>[] = [];
-    const seen = new Set<string>();
-    let next: URL | undefined = first;
-    let pages = 0;
-    while (next && collection.length < target && pages < 30) {
-      const page = await this.fetchWebPage(next);
-      for (const item of page.collection) {
-        const key = String(item.track && typeof item.track === 'object' ? (item.track as Record<string, unknown>).id : item.id ?? collection.length);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        collection.push(item);
-        if (collection.length >= target) break;
-      }
-      const parsed = page.nextHref ? safeUrl(page.nextHref) : undefined;
-      next = parsed?.protocol === 'https:' && parsed.hostname === 'api-v2.soundcloud.com' ? parsed : undefined;
-      pages += 1;
-    }
-    return { collection, nextHref: next?.toString() };
   }
 
   private async fetchWebJson(url: URL): Promise<Record<string, unknown>> {

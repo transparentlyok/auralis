@@ -126,6 +126,7 @@ function EntityGrid(props: {
           <span>{playlist.author} - {playlist.trackCount} tracks</span>
         </button>
       ))}
+      {props.loadingMore && <div className="loading-more">Loading more...</div>}
     </div>
   );
 }
